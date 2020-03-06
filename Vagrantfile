@@ -1,9 +1,10 @@
-DOCKER_VERSION = '5:19.03.7~3-0~ubuntu-xenial'
+DOCKER_VERSION = '5:19.03.7~3-0~ubuntu-bionic'
 KUBERNETES_VERSION = '1.17.3'
 
 CPUS = '4'
 MEMORY = '8192'
 
+#------------------ No need to change anything below this line -----------
 $dockerscript = <<-SCRIPT
 echo I am provisioning docker...
 sudo apt-get update
@@ -53,6 +54,7 @@ export KUBECONFIG=$HOME/.kube/config
 sudo swapoff -a
 
 ## Start minikube 
+sudo -E minikube config set memory #{MEMORY}
 sudo -E minikube start -v 4 --vm-driver none --kubernetes-version v#{KUBERNETES_VERSION} --bootstrapper kubeadm 
 
 ## Addons 
@@ -64,7 +66,11 @@ printf "export MINIKUBE_WANTREPORTERRORPROMPT=false\n" >> /home/vagrant/.bashrc
 printf "export MINIKUBE_HOME=/home/vagrant\n" >> /home/vagrant/.bashrc
 printf "export CHANGE_MINIKUBE_NONE_USER=true\n" >> /home/vagrant/.bashrc
 printf "export KUBECONFIG=/home/vagrant/.kube/config\n" >> /home/vagrant/.bashrc
+printf "source /etc/bash_completion" >> /home/vagrant/.bashrc
 printf "source <(kubectl completion bash)\n" >> /home/vagrant/.bashrc
+
+# extras
+sudo apt-get -y install bash-completion
 
 # Permissions
 sudo chown -R $USER:$USER $HOME/.kube
@@ -76,11 +82,11 @@ sudo echo "vm.max_map_count=262144" | sudo tee -a /etc/sysctl.d/90-vm_max_map_co
 SCRIPT
 
 Vagrant.configure("2") do |config|
-  config.vm.box = "ubuntu/xenial64"
+  config.vm.box = "bento/ubuntu-18.04"
 
-  config.vm.provider "virtualbox" do |v|
-    v.memory = "#{MEMORY}"
-    v.cpus = "#{CPUS}"
+  config.vm.provider "virtualbox" do |vb|
+    vb.customize ["modifyvm", :id, "--cpus", "#{CPUS}"] # set number of vcpus
+    vb.customize ["modifyvm", :id, "--memory", "#{MEMORY}"] # set amount of memory allocated vm memory
   end
 
   config.vm.provision "shell", inline: $dockerscript, privileged: false
