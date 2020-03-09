@@ -1,4 +1,5 @@
 build: 
+	rm output.box || true
 	vagrant destroy
 	vagrant up
 	vagrant ssh -c "minikube stop"

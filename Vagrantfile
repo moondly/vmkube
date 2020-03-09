@@ -1,5 +1,6 @@
 DOCKER_VERSION = '5:19.03.7~3-0~ubuntu-bionic'
 KUBERNETES_VERSION = '1.17.3'
+MINIKUBE_VERSION = '1.8.0'
 
 CPUS = '4'
 MEMORY = '8192'
@@ -24,7 +25,7 @@ $minikubescript = <<SCRIPT
 #!/bin/bash
 #Install minikube
 echo "Downloading Minikube"
-curl -q -Lo minikube https://storage.googleapis.com/minikube/releases/latest/minikube-linux-amd64 2>/dev/null
+curl -q -Lo minikube https://storage.googleapis.com/minikube/releases/v#{MINIKUBE_VERSION}/minikube-linux-amd64 2>/dev/null
 chmod +x minikube 
 sudo mv minikube /usr/local/bin/
 
@@ -52,13 +53,15 @@ export KUBECONFIG=$HOME/.kube/config
 
 # Disable SWAP since is not supported on a kubernetes cluster
 sudo swapoff -a
+sudo sed -i '/swap_1/d' /etc/fstab
+sudo rm -rf /dev/dm-1
 
 ## Start minikube 
 sudo -E minikube config set memory #{MEMORY}
 sudo -E minikube start -v 4 --vm-driver none --kubernetes-version v#{KUBERNETES_VERSION} --bootstrapper kubeadm 
 
 ## Addons 
-sudo -E minikube addons enable ingress
+#sudo -E minikube addons enable ingress
 
 ## Configure vagrant clients dir
 printf "export MINIKUBE_WANTUPDATENOTIFICATION=false\n" >> /home/vagrant/.bashrc
@@ -66,7 +69,7 @@ printf "export MINIKUBE_WANTREPORTERRORPROMPT=false\n" >> /home/vagrant/.bashrc
 printf "export MINIKUBE_HOME=/home/vagrant\n" >> /home/vagrant/.bashrc
 printf "export CHANGE_MINIKUBE_NONE_USER=true\n" >> /home/vagrant/.bashrc
 printf "export KUBECONFIG=/home/vagrant/.kube/config\n" >> /home/vagrant/.bashrc
-printf "source /etc/bash_completion" >> /home/vagrant/.bashrc
+printf "source /etc/bash_completion\n" >> /home/vagrant/.bashrc
 printf "source <(kubectl completion bash)\n" >> /home/vagrant/.bashrc
 
 # extras
